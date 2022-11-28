@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/json"
+	// "encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,27 +9,28 @@ import (
 	// "time"
 
 	"github.com/JacobNewton007/sendchamp-go-test/internal/data"
+	"github.com/JacobNewton007/sendchamp-go-test/internal/rabbitmq"
 	"github.com/JacobNewton007/sendchamp-go-test/internal/validator"
 )
 
 func (app *application) createTaskHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Fprintln(w, "create a new task")
 
-	var input struct {
-		Title     string `json:"title"`
-		CreatedBy string `json:"created_by"`
-	}
-
+	var input rabbitmq.AddTask
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
 
+	app.rMq.Publisher(input)
+
+	taskJob := app.rMq.Worker()
+
 	// copy the values from the input struct to a new task struct.
 	task := &data.Tasks{
-		Title:     input.Title,
-		CreatedBy: input.CreatedBy,
+		Title:     taskJob.Title,
+		CreatedBy: taskJob.CreatedBy,
 	}
 
 	// Initialize a new validator
@@ -42,34 +43,15 @@ func (app *application) createTaskHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// queue the tasks in rabbitMq
-	Publisher([]byte(fmt.Sprintf("%v", task)))
-
-	// Call the Insert() method on our tasks, passing in a pointer to the
-	// validated task struct. This will create a record in the database and update the
-	// task struct with the system-generated information.
-	var dataInput struct {
-		Title     string `json:"title"`
-		CreatedBy string `json:"created_by"`
-	}
-	taskJob := Worker()
-	if err := json.Unmarshal([]byte(fmt.Sprintf("%v", taskJob)), &dataInput); err != nil {
-		app.badRequestResponse(w, r, err)
-		return
-	}
-
-	job := &data.Tasks{
-		Title:     dataInput.Title,
-		CreatedBy: dataInput.CreatedBy,
-	}
-
-	fmt.Println("JOB ::::::::::::::", job)
-	id, err := app.models.Tasks.Insert(job)
-	if err != nil {
-		app.serverErrorResponse(w, r, err)
-		return
-	}
-	task.ID = id
+	fmt.Println("JOB ::::::::::::::", &task)
+	app.background(func() {
+		id, err := app.models.Tasks.Insert(task)
+		if err != nil {
+			app.logger.PrintError(err, nil)
+			return
+		}
+		task.ID = id
+	})
 
 	// When sending a HTTP response, we want to include a Location header to let the
 	// client know which URL they can find the newly-created resource at. We make an

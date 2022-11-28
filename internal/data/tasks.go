@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/JacobNewton007/sendchamp-go-test/internal/validator"
 	"time"
+
+	"github.com/JacobNewton007/sendchamp-go-test/internal/validator"
 )
 
 type Tasks struct {
@@ -40,7 +41,7 @@ func (m TaskModel) Insert(task *Tasks) (int64, error) {
 	// Define the SQL query for inserting a new record in
 	// the system-generated data.
 	query := `
-		INSERT INTO tasks (title, createdby)
+		INSERT INTO tasks (title, created_by)
 		VALUES (?, ?)`
 
 	// Create an args slice containing the values for the placeholder parameters from

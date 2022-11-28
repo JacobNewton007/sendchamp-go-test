@@ -22,7 +22,7 @@ confirm:
 ## run/api: run the cmd/api application
 .PHONY: run/api
 run/api:
-	go run ./cmd/api -db-dsn='${USNAME}:${PSWORD}@tcp(${HOST})/${DBNAME}'
+	go run ./cmd/api -db-dsn='${USNAME}:${PSWORD}@tcp(${HOST})/${DBNAME}' -rabbitmq-uri=${RABBITURI}
 
 ## db/psql: connect to the database using psql
 .PHONY: db/mysql

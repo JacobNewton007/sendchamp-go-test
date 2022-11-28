@@ -5,12 +5,16 @@ import (
 )
 
 type RabbitMQ struct {
+	conn *amqp.Connection
 }
 
-func (rabbit RabbitMQ) NewRabbitMq(connString string) *amqp.Connection {
-	conn, err := amqp.Dial(connString)
-	if err != nil {
-		panic(err)
+type AddTask struct {
+	Title     string `json:"title"`
+	CreatedBy string `json:"created_by"`
+}
+
+func NewMq(connString *amqp.Connection) RabbitMQ {
+	return RabbitMQ{
+		conn: connString,
 	}
-	return conn
 }

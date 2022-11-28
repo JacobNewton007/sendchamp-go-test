@@ -111,6 +111,7 @@ func main() {
 	if err != nil {
 		logger.PrintFatal(err, nil)
 	}
+
 	defer rabbitConn.Close()
 	logger.PrintInfo("rabbitmq connection pool established", nil)
 	// Use the data.NewModels() function to initialize a Models struct, passing in the
@@ -119,7 +120,7 @@ func main() {
 		config: cfg,
 		logger: logger,
 		models: data.NewModels(db),
-		rMq: ,
+		rMq:    rabbitmq.NewMq(rabbitConn),
 	}
 
 	err = app.server()
